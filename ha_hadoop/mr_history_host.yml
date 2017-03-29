@@ -1,0 +1,29 @@
+- hosts: mr_host
+  remote_user: root
+
+  tasks:
+    - name: Creating MapReduce Job History directory..
+      shell: su - hdfs -c 'hdfs dfs -mkdir -p /mapred/history/done_intermediate'
+
+    - name: Changing Ownership of directory
+      shell: su - hdfs -c 'hdfs dfs -chown -R  mapred:hadoop   /mapred'
+
+    - name: Giving group privilges of directory
+      shell: su - hdfs -c 'hdfs dfs -chmod -R g+rxw /mapred'
+
+    - name: creating user home directory
+      shell: su - hdfs -c 'hdfs dfs -mkdir -p /user/hdfs'
+
+    - name: Changing ownership
+      shell: su - hdfs -c 'hdfs dfs -chown hdfs:hdfs /user/hdfs'
+
+
+    - name: copying script
+      copy: src=hadoop-historyserver dest=/etc/init.d/ mode=755
+    - name: startup on
+      shell: chkconfig hadoop-historyserver on
+
+    - name: start service
+      shell: service hadoop-historyserver start 
+      
+      

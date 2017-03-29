@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<configuration>
+  <property>
+    <name>fs.default.name</name>
+    <value>hdfs://{{ rm_manager }}:9000</value>
+  </property>
+  <property>
+    <name>hadoop.http.staticuser.user</name>
+    <value>{{ HTTP_STATIC_USER }}</value>
+  </property>
+</configuration>

@@ -1,0 +1,3 @@
+export HADOOP_HOME={{ HADOOP_HOME }}
+export HADOOP_PREFIX={{ HADOOP_HOME }}
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin

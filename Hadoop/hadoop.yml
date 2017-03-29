@@ -1,0 +1,111 @@
+- hosts:  hadoop
+  become: yes
+  become_method: sudo
+  vars:
+    HADOOP_HOME: /usr/local/hadoop
+    NN_DATA_DIR: /var/data/hadoop/hdfs/nn
+    SNN_DATA_DIR: /var/data/hadoop/hdfs/snn
+    DN_DATA_DIR: /var/data/hadoop/hdfs/dn
+    YARN_LOG_DIR: /var/log/hadoop/yarn
+    HADOOP_LOG_DIR: /var/log/hadoop/hdfs
+    HADOOP_MAPRED_LOG_DIR: /var/log/hadoop/mapred
+    YARN_PID_DIR: /var/run/hadoop/yarn
+    HADOOP_PID_DIR: /var/run/hadoop/hdfs
+    HADOOP_MAPRED_PID_DIR: /var/run/hadoop/mapred
+    HTTP_STATIC_USER: hdfs
+    YARN_PROXY_PORT: 8081
+    rm_manager: spark-hive1.example.com
+    secondary_namenode: spark-hive2.example.com
+    yarn_proxy_host: spark-hive3.example.com
+    hadoop_group: hadoop
+    hadoop_user: hadoop
+
+
+
+  tasks: 
+    - user: name=hadoop comment="Hadoop"  shell=/bin/bash
+    - name: Download hadoop
+      get_url: url=http://192.168.8.184/hadoop-2.7.3.tar.gz dest=/opt
+
+    - name: Extract hadoop archive
+      unarchive: src=/opt/hadoop-2.7.3.tar.gz dest=/usr/local/ copy=no
+    - command: mv /usr/local/hadoop-2.7.3 /usr/local/hadoop
+
+    - name: export hadoop home 
+      template: src=hadoop.sh dest=/etc/profile.d/ owner=root group=root
+   
+    - lineinfile: dest=/home/hadoop/.bashrc regexp="HADOOP_HOME=" line="export HADOOP_HOME=/usr/local/hadoop"
+    - lineinfile: dest=/home/hadoop/.bashrc regexp="PATH=" line="export PATH=$PATH:$HADOOP_HOME/bin"
+    - lineinfile: dest=/home/hadoop/.bashrc regexp="HADOOP_SSH_OPTS=" line="export HADOOP_SSH_OPTS=\"-i /home/hadoop/.ssh/hadoop_rsa\""
+    
+    - name: creating system accounts and groups
+      user: name={{ item }} group=hadoop
+      with_items:
+        - yarn
+        - hdfs
+        - mapred
+
+    - name: creating data directories 
+      file: path={{ item }} state=directory owner=hdfs group=hadoop mode=775
+      with_items:
+        - /var/data/hadoop/hdfs/nn
+        - /var/data/hadoop/hdfs/snn
+        - /var/data/hadoop/hdfs/dn
+
+    - name: creating log directories
+      file: path={{ item.name }} state=directory owner={{ item.owner }} group=hadoop mode=775
+      with_items:
+        - { name: '/var/log/hadoop/yarn', owner: 'yarn' }
+        - { name: '/var/log/hadoop/hdfs', owner: 'hdfs' }
+        - { name: '/var/log/hadoop/mapred', owner: 'mapred' }
+
+    - name: creating pid directories
+      file: path={{ item.name }} state=directory owner={{ item.owner }} group=hadoop mode=775
+      with_items:
+        - { name: '/var/run/hadoop/yarn', owner: 'yarn' }
+        - { name: '/var/run/hadoop/hdfs', owner: 'hdfs' }
+        - { name: '/var/run/hadoop/mapred', owner: 'mapred' }
+  
+    - name: Edit ENV for Log Directiory
+      lineinfile: dest=/usr/local/hadoop/etc/hadoop/{{ item.name }} line="{{ item.export }}" 
+      with_items:
+        - { name: 'hadoop-env.sh', export: 'export HADOOP_LOG_DIR=/var/log/hadoop/hdfs' }
+        - { name: 'yarn-env.sh', export: 'export YARN_LOG_DIR=/var/log/hadoop/hdfs' }
+        - { name: 'mapred-env.sh', export: 'export HADOOP_MAPRED_LOG_DIR=/var/log/hadoop/mapred' }
+
+    - name: Edit ENV for PID Directiory
+      lineinfile: dest=/usr/local/hadoop/etc/hadoop/{{ item.name }} line="{{ item.export }}" 
+      with_items:
+        - { name: 'hadoop-env.sh', export: 'export HADOOP_PID_DIR=/var/run/hadoop/hdfs' }
+        - { name: 'yarn-env.sh', export: 'export YARN_PID_DIR=/var/run/hadoop/hdfs' }
+        - { name: 'mapred-env.sh', export: 'export HADOOP_MAPRED_PID_DIR=/var/run/hadoop/mapred' }
+    
+    - name: Add the service scripts
+      template: src={{ item.src }} dest={{ item.dest }} owner={{ hadoop_user }} group={{ hadoop_group }}
+      with_items:
+        - {src: "core-site.xml", dest: "/usr/local/hadoop/etc/hadoop/core-site.xml"}
+        - {src: "hdfs-site.xml", dest: "/usr/local/hadoop/etc/hadoop/hdfs-site.xml"}
+        - {src: "yarn-site.xml", dest: "/usr/local/hadoop/etc/hadoop/yarn-site.xml"}
+        - {src: "mapred-site.xml", dest: "/usr/local/hadoop/etc/hadoop/mapred-site.xml"}
+
+    - name: creating link in all hosts
+      shell: ln -s {{ item.name }} {{ item.value }}
+      with_items:
+        - { name: "/usr/local/hadoop/etc/hadoop", value: "/etc/hadoop" }
+        - { name: "/usr/local/hadoop/bin/*", value: "/usr/bin" }
+        - { name: "/usr/local/hadoop/libexec/*", value: "/usr/libexec" }
+    
+
+#    - name: creating user home directory 
+#      shell: su - hdfs -c 'hdfs dfs -mkdir -p /user/hdfs'
+
+#    - name: Changing ownership 
+#      shell: su - hdfs -c 'hdfs dfs -chown hdfs:hdfs /user/hdfs'
+ 
+
+        
+
+
+
+
+      

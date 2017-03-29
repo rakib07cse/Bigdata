@@ -1,0 +1,40 @@
+- hosts: hadoop
+  become: yes
+  become_method: sudo
+
+  tasks:
+    - name: donwload zookeeper package to all node
+      get_url: url=http://192.168.8.184/zookeeper-3.4.9.tar.gz dest=/opt
+
+    - name: Extract zookeeper archive
+      unarchive: src=/opt/zookeeper-3.4.9.tar.gz dest=/usr/local/ copy=no
+    - command: mv /usr/local/zookeeper-3.4.9 /usr/local/zookeeper
+
+    - name: create a file
+      file: path=/etc/profile.d/zookeeper.sh state=touch mode=0755
+
+    - name: edit profile file
+      lineinfile: dest=/etc/profile.d/zookeeper.sh line="{{ item }}"
+      with_items:
+        - ZK_HOME=/usr/local/zookeeper
+        - PATH=$PATH:$ZK_HOME/bin
+        - CLASSPATH=.:$ZK_HOME/lib
+        - export PATH
+        - export ZK_HOME
+        - export CLASSPATH
+
+    - name: Creating Zookeeper data directories 
+      file: path={{ item }} state=directory owner=root group=root mode=775
+      with_items:
+        - /var/data/zookeeper/data
+    
+    - name: reload the file
+      shell: source /etc/profile.d/zookeeper.sh
+
+    - name : debug value
+      shell: echo "$ZK_HOME"
+      register: dist
+
+    - debug: msg="{{ dist.stdout }}"
+
+      

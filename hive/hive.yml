@@ -1,0 +1,67 @@
+- hosts:  hive
+  become: yes
+  become_method: sudo
+  vars: 
+     metastore_server: spark-hive3.example.com
+     metastore_user: hive
+     metastore_password: nopass
+     hive_user: hive
+     hadoop_group: hadoop
+
+  tasks: 
+    - name: Download Hive compress file
+      get_url: url=http://192.168.8.184/apache-hive-2.1.0-bin.tar.gz dest=/opt
+
+    - name: Extract Hive archive
+      unarchive: src=/opt/apache-hive-2.1.0-bin.tar.gz dest=/usr/local/ copy=no
+    - command: mv /usr/local/apache-hive-2.1.0-bin /usr/local/hive
+
+    - name: Creating Hive.sh file
+      file: path=/etc/profile.d/hive.sh state=touch mode=0755
+
+    - name: Edit Hive.sh profile file
+      lineinfile: dest=/etc/profile.d/hive.sh line="{{ item }}"
+      with_items:
+        - HIVE_HOME=/usr/local/hive
+        - PATH=$PATH:$HIVE_HOME/bin
+        - export PATH
+        - export HIVE_HOME
+
+    - name: Source hive.sh file
+      shell: source /etc/profile.d/hive.sh
+
+    - name : debug value
+      shell: echo "$HIVE_HOME"
+      register: dist
+
+    - debug: msg="{{ dist.stdout }}"
+    
+    - name: Rename spark-env.sh.template to spark-env.sh
+      command: cp /usr/local/spark/conf/spark-env.sh.template /usr/local/spark/conf/spark-env.sh
+
+
+    - name: Setting HADOOP_PATH in HIVE config.sh 
+      lineinfile: dest=/usr/local/hive/bin/hive-config.sh line="{{ item }}"
+      with_items:
+        - export HADOOP_HOME=/usr/local/hadoop
+
+    - name: creating system accounts and groups
+      user: name={{ item }} group=hadoop
+      with_items:
+        - hive
+    - name : Create Hive directories within HDFS
+      shell: su - hdfs -c 'hdfs dfs -mkdir -p /user/hive/warehouse'
+
+    - name: Changing ownership 
+      shell: su - hdfs -c 'hdfs dfs -chown hive:hadoop /user/hive/warehouse'
+
+    - name: Changing permision on /tmp
+      shell: su - hdfs -c 'hdfs dfs -chmod -R  g+w /tmp'
+
+    - name: Copying config file to destination directory
+      template: src={{ item.src }} dest={{ item.dest }} owner={{ hive_user }} group={{ hadoop_group }}
+      with_items:
+        - {src: "hive-site.xml", dest: "/usr/local/hive/conf/hive-site.xml"}
+
+    - name: Copying mysql jdbc connector for metastore 
+      get_url: url=http://192.168.8.184/mysql-connector-java-5.1.18.jar dest=/usr/local/hive/lib/

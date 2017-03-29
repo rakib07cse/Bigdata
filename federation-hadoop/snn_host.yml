@@ -1,0 +1,19 @@
+- hosts: snn_host
+  remote_user: root
+  vars:
+    SNN_DATA_DIR: /var/data/hadoop/hdfs/snn
+
+  tasks:
+    - name: Creating HDFS data Directories
+      file: path={{ SNN_DATA_DIR }} state=directory owner=hdfs group=hadoop mode=775
+
+    - name: copying script
+      copy: src=hadoop-secondarynamenode dest=/etc/init.d/ mode=755
+
+    - name: startup on
+      shell: chkconfig hadoop-secondarynamenode on
+
+    - name: start service
+      shell: service hadoop-secondarynamenode start 
+        
+      

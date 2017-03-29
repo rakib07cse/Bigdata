@@ -1,0 +1,57 @@
+- hosts:  java
+  become: yes
+  become_method: sudo
+
+  tasks: 
+    - name: Download Spark compress file
+      get_url: url=http://192.168.8.184/spark-2.1.0-bin-hadoop2.7.tgz dest=/opt
+
+    - name: Extract Spark archive
+      unarchive: src=/opt/spark-2.1.0-bin-hadoop2.7.tgz dest=/usr/local/ copy=no
+    - command: mv /usr/local/spark-2.1.0-bin-hadoop2.7 /usr/local/spark
+
+    - name: Creating spark.sh file
+      file: path=/etc/profile.d/spark.sh state=touch mode=0755
+
+    - name: Edit Spark.sh profile file
+      lineinfile: dest=/etc/profile.d/spark.sh line="{{ item }}"
+      with_items:
+        - SPARK_HOME=/usr/local/spark
+        - PATH=$PATH:$SPARK_HOME/bin
+        - export PATH
+        - export SPARK_HOME
+
+    - name: Source Spark.sh file
+      shell: source /etc/profile.d/spark.sh
+
+    - name : debug value
+      shell: echo "$SPARK_HOME"
+      register: dist
+
+    - debug: msg="{{ dist.stdout }}"
+    
+    - name: Rename spark-env.sh.template to spark-env.sh
+      command: cp /usr/local/spark/conf/spark-env.sh.template /usr/local/spark/conf/spark-env.sh
+
+
+    - name: Edit spark-env.sh   
+      lineinfile: dest=/usr/local/spark/conf/spark-env.sh line="{{ item }}"
+      with_items:
+        - export JAVA_HOME=/usr/java/default
+        - export SPARK_WORKER_CORES=8
+
+   
+
+    - name: Creating slaves file
+      file: path=/usr/local/spark/conf/slaves state=touch mode=0755
+
+    - name: Edit Slaves  file
+      lineinfile: dest=/usr/local/spark/conf/slaves line="{{ item }}"
+      with_items:
+        - spark-hive1.example.com
+        - spark-hive2.example.com
+        - spark-hive3.example.com 
+ 
+
+
+      

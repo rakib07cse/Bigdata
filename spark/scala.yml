@@ -1,0 +1,38 @@
+- hosts:  java
+  become: yes
+  become_method: sudo
+
+  tasks: 
+    - name: Download Scala
+      get_url: url=http://192.168.8.184/scala-2.12.0.tgz dest=/opt
+
+    - name: Extract Scala archive
+      unarchive: src=/opt/scala-2.12.0.tgz dest=/usr/local/ copy=no
+    - command: mv /usr/local/scala-2.12.0 /usr/local/scala
+
+   # - name: Export Scala home 
+   #   template: src=scala.sh dest=/etc/profile.d/ owner=root group=root
+    - name: creating scala.sh file
+      file: path=/etc/profile.d/scala.sh state=touch mode=0755
+
+    - name: Edit scala.sh profile file
+      lineinfile: dest=/etc/profile.d/scala.sh line="{{ item }}"
+      with_items:
+        - SCALA_HOME=/usr/local/scala
+        - PATH=$PATH:$SCALA_HOME/bin
+        - export PATH
+        - export SCALA_HOME
+
+    - name: Source scala.sh file
+      shell: source /etc/profile.d/scala.sh
+
+    - name : debug value
+      shell: echo "$SCALA_HOME"
+      register: dist
+
+    - debug: msg="{{ dist.stdout }}"
+
+   
+
+
+      

@@ -1,0 +1,13 @@
+- hosts: nm_hosts
+  remote_user: root
+
+  tasks:
+    - name: copying script
+      copy: src=hadoop-nodemanager dest=/etc/init.d/ mode=755
+
+    - name: startup on
+      shell: chkconfig hadoop-nodemanager on
+
+    - name: start service
+      shell: service hadoop-nodemanager start   
+      

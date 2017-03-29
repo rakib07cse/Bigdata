@@ -1,0 +1,13 @@
+- hosts: rm_host
+  remote_user: root
+
+  tasks:
+    - name: copying script
+      copy: src=hadoop-resourcemanager dest=/etc/init.d/ mode=755
+
+    - name: startup on
+      shell: chkconfig hadoop-resourcemanager on
+
+    - name: start service
+      shell: service hadoop-resourcemanager start 
+      

@@ -1,0 +1,13 @@
+- hosts: yarn_proxy_host
+  remote_user: root
+
+  tasks:
+    - name: copying script
+      copy: src=hadoop-proxyserver dest=/etc/init.d/ mode=755
+    - name: startup on
+      shell: chkconfig hadoop-proxyserver on
+
+    - name: start service
+      shell: service hadoop-proxyserver start 
+      
+      

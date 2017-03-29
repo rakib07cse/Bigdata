@@ -1,0 +1,11 @@
+- hosts: java
+  become: alex
+  become_method: sudo
+
+  tasks:
+    - name: install package
+      yum: name=finger state=present
+
+    - name: create fake 'nologin' shell
+      file: path=/var/tmp/tiif state=touch  mode=0555
+      

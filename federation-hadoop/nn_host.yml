@@ -1,0 +1,21 @@
+- hosts: nn_host
+  remote_user: root
+  vars:
+    NN_DATA_DIR: /var/data/hadoop/hdfs/nn
+
+  tasks:
+    - name: Creating HDFS data Directories
+      file: path={{ NN_DATA_DIR }} state=directory owner=hdfs group=hadoop mode=775
+    
+    - name: Formatting the Namenode
+      shell: su - hdfs -c '/usr/local/hadoop/bin/hdfs namenode -format -clusterId ClusterX'
+
+    - name: copying script
+      copy: src=hadoop-namenode dest=/etc/init.d/ mode=755
+
+    - name: startup on
+      shell: chkconfig hadoop-namenode on
+
+    - name: start service
+      shell: service hadoop-namenode start 
+      

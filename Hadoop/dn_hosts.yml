@@ -1,0 +1,17 @@
+- hosts: dn_hosts
+  remote_user: root
+  vars:
+    DN_DATA_DIR: /var/data/hadoop/hdfs/dn
+
+  tasks:
+    - name: Creating HDFS data Directories
+      file: path={{ DN_DATA_DIR }} state=directory owner=hdfs group=hadoop mode=775
+
+    - name: copying script
+      copy: src=hadoop-datanode dest=/etc/init.d/ mode=755
+  
+    - name: startup on
+      shell: chkconfig hadoop-datanode on
+
+    - name: start service
+      shell: service hadoop-datanode start   

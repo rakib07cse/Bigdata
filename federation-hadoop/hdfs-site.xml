@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<configuration>
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>{{ NN_DATA_DIR }}</value>
+  </property>
+  <property>
+    <name>fs.checkpoint.dir</name>
+    <value>{{ SNN_DATA_DIR }}</value>
+  </property>
+  <property>
+    <name>fs.checkpoint.edits.dir</name>
+    <value>{{ SNN_DATA_DIR }}</value>
+  </property>
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>{{ DN_DATA_DIR }}</value>
+  </property>
+  <property>
+    <name>dfs.namenode.http-address</name>
+    <value>{{ rm_manager }}:50070</value>
+  </property>
+  <property>
+    <name>dfs.namenode.secondary.http-address</name>
+    <value>{{ secondary_namenode }}:50090</value>
+  </property>
+</configuration>
